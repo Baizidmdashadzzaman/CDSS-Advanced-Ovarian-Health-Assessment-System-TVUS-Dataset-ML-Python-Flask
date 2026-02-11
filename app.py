@@ -6,7 +6,7 @@ import numpy as np
 
 app = Flask(__name__)
 
-# মডেল এবং মেটাডাটা লোড
+
 model = joblib.load('model_assets/ovarian_model.pkl')
 with open('model_assets/model_metadata.json', 'r') as f:
     metadata = json.load(f)
@@ -15,18 +15,17 @@ FEATURES = metadata['selected_features']
 
 
 def get_clinical_guidelines(prob):
-    """রিস্ক স্কোরের ওপর ভিত্তি করে ক্লিনিক্যাল গাইডলাইন তৈরি"""
     if prob < 0.30:
         tier = "Low Risk"
-        color = "#1e3a8a"  # Deep Blue
+        color = "#1e3a8a"  
         rec = "Routine follow-up in 6–12 months recommended. Standard TVUS screening."
     elif 0.30 <= prob < 0.70:
         tier = "Moderate Risk"
-        color = "#f59e0b"  # Orange
+        color = "#f59e0b"  
         rec = "Consider CA-125 blood test and repeat TVUS in 3 months for monitoring."
     else:
         tier = "High Risk"
-        color = "#ef4444"  # Red
+        color = "#ef4444"  
         rec = "Urgent referral to Gynecologic Oncologist. Immediate biopsy or surgical consultation recommended."
     return tier, color, rec
 
@@ -45,7 +44,6 @@ def predict():
         prob = model.predict_proba(input_df)[0][1]
         risk_tier, risk_color, recommendation = get_clinical_guidelines(prob)
 
-        # XAI logic (টপ ৬ ফিচার)
         importances = model.calibrated_classifiers_[0].estimator.feature_importances_
         feature_impact = []
         for i, feat in enumerate(FEATURES):

@@ -68,20 +68,3 @@ Screenshots captured during local runs (embedded from repository root):
 
 ![App Screenshot](./Screenshot 2026-02-11 124758.jpg)
 
-> If screenshots do not display on GitHub (large images or spaces in filename), you can move them into a folder (e.g., `docs/screenshots/`) and update paths accordingly.
-
----
-
-## Recommended next steps 💡
-- Move screenshots into `docs/screenshots/` and add optimized/thumbnail versions to reduce repo size.
-- Add route documentation and example cURL requests for the `/predict` endpoint.
-- Add unit tests and automated checks.
-
----
-
-## License
-Add your license here (e.g., MIT). If you want, I can add a LICENSE file.
-
----
-
-If you'd like changes to the README text, structure, or to include additional images, tell me which updates to make and I will apply them. 🚀
