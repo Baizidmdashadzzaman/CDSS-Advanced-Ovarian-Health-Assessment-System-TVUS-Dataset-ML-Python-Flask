@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDSS - Advanced Ovarian Health Assessment</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --deep-blue: #1e3a8a;
+            --hover-blue: #1e40af;
+            --bg: #f8fafc;
+            --moderate-orange: #f59e0b;
+            --high-red: #ef4444;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; color: #334155; }
+
+        /* Sidebar Design */
+        .sidebar {
+            width: 380px; background: white; height: 100vh; padding: 30px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05); overflow-y: auto;
+            border-right: 4px solid var(--deep-blue); position: sticky; top: 0;
+        }
+        h2 { color: var(--deep-blue); font-size: 22px; margin-bottom: 5px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        /* Demo Buttons */
+        .demo-section { margin: 20px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+        .demo-btn {
+            background: none; border: 1px solid var(--deep-blue); color: var(--deep-blue);
+            padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 11px;
+            font-weight: 600; transition: 0.2s;
+        }
+        .demo-btn:hover { background: var(--deep-blue); color: white; }
+        .btn-mod { border-color: var(--moderate-orange); color: var(--moderate-orange); }
+        .btn-mod:hover { background: var(--moderate-orange); }
+        .btn-high { border-color: var(--high-red); color: var(--high-red); }
+        .btn-high:hover { background: var(--high-red); }
+
+        /* Form Design */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+        label { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; }
+        input { width: 85%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .btn-analyze {
+            background: var(--deep-blue); color: white; width: 100%; padding: 15px;
+            border: none; border-radius: 8px; margin-top: 25px; cursor: pointer;
+            font-weight: bold; font-size: 15px; transition: 0.3s;
+        }
+        .btn-analyze:hover { background: var(--hover-blue); transform: translateY(-1px); }
+
+        /* Main Content Design */
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .card {
+            background: white; padding: 25px; border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px;
+            border-left: 6px solid var(--deep-blue);
+        }
+
+        /* Risk Scale / Thermometer */
+        .risk-scale-container { width: 100%; height: 20px; background: #e2e8f0; border-radius: 10px; margin: 15px 0; position: relative; }
+        .risk-fill { height: 100%; border-radius: 10px; transition: width 1s ease-in-out; }
+
+        .risk-value { font-size: 54px; font-weight: 800; color: var(--deep-blue); margin: 0; }
+
+        /* Recommendation Box */
+        .rec-box {
+            background: #f1f5f9; padding: 20px; border-radius: 8px;
+            border: 1px dashed var(--deep-blue); margin-top: 10px;
+        }
+        .chart-container { height: 350px; margin-top: 15px; }
+        .disclaimer { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 30px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>CDSS Dashboard</h2>
+    <p style="font-size: 12px; color: #64748b;">Clinical Decision Support Tool</p>
+
+    <div class="demo-section">
+        <button class="demo-btn" onclick="fillDemo('normal')">Demo: Low Risk</button>
+        <button class="demo-btn btn-mod" onclick="fillDemo('moderate')">Demo: Moderate</button>
+        <button class="demo-btn btn-high" onclick="fillDemo('abnormal')">Demo: High Risk</button>
+    </div>
+
+    <form action="/predict" method="post">
+        <div class="input-grid">
+            {% for feature in features %}
+            <div class="input-group">
+                <label>{{ feature|replace('_', ' ') }}</label>
+                <input type="number" step="any" name="{{ feature }}" id="{{ feature }}" required>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn-analyze">GENERATE CLINICAL REPORT</button>
+    </form>
+</div>
+
+<div class="main-content">
+    {% if not show_results %}
+        <div style="text-align: center; margin-top: 120px;">
+            <h1 style="color: var(--deep-blue); font-size: 36px;">Ovarian Cancer Screening CDSS</h1>
+            <p style="font-size: 18px; color: #64748b;">Input TVUS measurement data on the left to begin automated risk stratification.</p>
+        </div>
+    {% else %}
+        <div class="card" style="border-left-color: {{ risk_color }};">
+            <h3 style="margin:0; color: var(--deep-blue);">Diagnostic Probability Assessment</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 15px;">
+                <div>
+                    <div class="risk-value">{{ prob }}%</div>
+                    <p style="color: #64748b; font-weight: 600; margin: 0;">Probability of Malignancy</p>
+                </div>
+                <div style="background: {{ risk_color }}; color: white; padding: 12px 25px; border-radius: 8px; font-weight: bold; font-size: 20px;">
+                    {{ risk_tier }}
+                </div>
+            </div>
+
+            <div class="risk-scale-container">
+                <div class="risk-fill" style="width: {{ prob }}%; background: {{ risk_color }};"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #94a3b8;">
+                <span>LOW (0%)</span>
+                <span>MODERATE (30%)</span>
+                <span>HIGH (70%)</span>
+                <span>100%</span>
+            </div>
+        </div>
+
+        <div class="card" style="border-left-color: {{ risk_color }};">
+            <h3 style="margin:0; color: var(--deep-blue);">Clinical Recommendations</h3>
+            <div class="rec-box">
+                <p style="margin:0; font-style: italic; font-size: 16px; color: #1e293b; line-height: 1.5;">
+                    "{{ recommendation }}"
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin:0; color: var(--deep-blue);">Explainable AI (XAI): Top 6 Risk Contributors</h3>
+            <p style="font-size: 13px; color: #64748b; margin-top: 5px;">This dynamic chart identifies which specific anatomical features most influenced the current patient's risk score.</p>
+            <div class="chart-container">
+                <canvas id="impactChart"></canvas>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            NOTICE: This system is a clinical decision support prototype. Final medical decisions should be made by qualified healthcare professionals based on all available clinical data.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const demoData = {
+        normal: {
+            "ovcyst_diamr":0.1,"ovcyst_diaml":0,"ovcyst_volr":0.2,"ovcyst_voll":0,
+            "ovary_diamr":1.6,"ovary_diaml":1.5,"ovary_volr":3.0,"total_cyst_vol":0.2,
+            "ovary_asymmetry":0.1,"total_ovary_vol":6.5,"cyst_complexity":0,"ovary_density_index":0.03
+        },
+        moderate: {
+            "ovcyst_diamr":0.4, "ovcyst_diaml":0.1, "ovcyst_volr":0.6, "ovcyst_voll":0.2,
+            "ovary_diamr":1.8, "ovary_diaml":1.7, "ovary_volr":4.0, "total_cyst_vol":0.8,
+            "ovary_asymmetry":0.4, "total_ovary_vol":9.5, "cyst_complexity":0.5, "ovary_density_index":0.08
+        },
+        abnormal: {
+            "ovcyst_diamr":5.0,"ovcyst_diaml":3.5,"ovcyst_volr":45.0,"ovcyst_voll":20.0,
+            "ovary_diamr":6.0,"ovary_diaml":4.5,"ovary_volr":50.0,"total_cyst_vol":65.0,
+            "ovary_asymmetry":22.0,"total_ovary_vol":95.0,"cyst_complexity":8.0,"ovary_density_index":0.68
+        }
+    };
+
+    function fillDemo(type) {
+        const data = demoData[type];
+        for (const key in data) {
+            const input = document.getElementById(key);
+            if(input) input.value = data[key];
+        }
+    }
+
+    {% if show_results %}
+        const impactData = JSON.parse('{{ feature_impact | safe }}');
+        const ctx = document.getElementById('impactChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: impactData.map(d => d.feature),
+                datasets: [{
+                    label: 'Clinical Influence Weight',
+                    data: impactData.map(d => d.impact),
+                    backgroundColor: '{{ risk_color }}',
+                    borderRadius: 5,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { display: false }, ticks: { color: '#64748b' } },
+                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#1e293b', font: { weight: '600' } } }
+                }
+            }
+        });
+    {% endif %}
+</script>
+
+</body>
+</html>

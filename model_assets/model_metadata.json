@@ -1,0 +1,21 @@
+{
+    "selected_features": [
+        "ovcyst_diamr",
+        "ovcyst_diaml",
+        "ovcyst_volr",
+        "ovcyst_voll",
+        "ovary_diamr",
+        "ovary_diaml",
+        "ovary_volr",
+        "total_cyst_vol",
+        "ovary_asymmetry",
+        "total_ovary_vol",
+        "cyst_complexity",
+        "ovary_density_index"
+    ],
+    "feature_count": 12,
+    "target_mapping": {
+        "0": "Normal",
+        "1": "Abnormal"
+    }
+}
