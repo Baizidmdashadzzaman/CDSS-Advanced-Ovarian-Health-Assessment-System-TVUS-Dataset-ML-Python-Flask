@@ -52,7 +52,7 @@ def predict():
             impact = float(importances[i] * 100)
             feature_impact.append({"feature": feat.replace('_', ' ').title(), "impact": round(impact, 2)})
 
-        feature_impact = sorted(feature_impact, key=lambda x: x['impact'], reverse=True)
+        feature_impact = sorted(feature_impact, key=lambda x: x['impact'], reverse=True)[:6]
 
         return render_template('index.html',
                                features=FEATURES,
